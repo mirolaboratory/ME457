@@ -1,3 +1,4 @@
+clear all
 % Create a serial object
 Port = 'COM4'; % Replace with your port name
 baudRate = 115200; % Set your baud rate
