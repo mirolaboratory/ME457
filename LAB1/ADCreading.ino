@@ -1,7 +1,7 @@
 // Simple demo: Digital pin as source, read voltage divider with ADC
 
 const int SRC_PIN = 9;   // digital output source
-const int ADC_PIN = A1;  // analog input reads divider
+const int ADC_PIN = A0;  // analog input reads divider
 const float VREF = 5.0;  // assume Arduino Nano powered at 5 V
 
 unsigned long startTime;     // Store the start time
