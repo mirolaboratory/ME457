@@ -26,5 +26,5 @@ void loop() {
   Serial.print(",");
   Serial.println(vadc, 3);
 
-  delay(1000);
+  delay(100);
 }
