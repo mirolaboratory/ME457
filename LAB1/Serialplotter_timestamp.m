@@ -14,7 +14,7 @@ xlabel('Sample Number');
 ylabel('Sensor Value');
 title('Real-time Serial Data Plot');
 
-XLim = 10; % Show last 10 seconds of data
+XLim = 20; % Show last XLim seconds of data
 % Set axis limits (adjust as needed)
 pl.YLim = [0, 5]; % Adjust Y-axis limits based on your data range
 
@@ -61,9 +61,13 @@ try
                     % Add point to animated line
                     addpoints(hData, timestamp, value);
                     
+                    if timestamp < XLim
+                       % For timestamp < XLim, show a small initial window
+                                pl.XLim = [0, XLim];
+                            else
                     % Keep X-axis limit increasing to show scrolling effect
                     pl.XLim = [max(0, timestamp - XLim), timestamp];
-                    
+                    end
                     % Use 'limitrate' to improve performance and reduce lag
                     drawnow limitrate;
                     
