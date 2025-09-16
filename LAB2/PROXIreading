@@ -1,0 +1,30 @@
+// QRE1113 
+
+const int ADC_PIN = A3;  // analog input reads proximity sensor output
+const float VREF = 5.0;  // Reference voltage for analog reading
+
+unsigned long startTime;     // Store the start time
+bool firstLoop = true;       // Initialize to true
+unsigned long currentTime; 
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) {;}
+  analogReference(DEFAULT); // Configures the reference voltage used for analog input
+}
+
+void loop() {
+	  if (firstLoop) {
+    startTime = millis();  // Timestamp starts exactly when measurements begin
+    firstLoop = false;
+  }
+
+  currentTime = millis() - startTime;
+  int adc = analogRead(ADC_PIN);
+  float vadc = adc * VREF / 1023.0;
+  Serial.print(currentTime);
+  Serial.print(",");
+  Serial.println(vadc, 3);
+
+  delay(1000);
+}
