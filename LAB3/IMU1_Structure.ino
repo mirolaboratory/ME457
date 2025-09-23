@@ -4,7 +4,6 @@ void setup(){
   Wire.begin();
   Wire.beginTransmission();
   Wire.write();
-  Wire.write();  
   Wire.endTransmission();
   Serial.begin();
   while(!Serial){;}
