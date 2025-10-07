@@ -23,7 +23,7 @@
 #define ACCEL_SCALE ACCEL_SCALE_2G  // Default ±2g
 #define GYRO_SCALE GYRO_SCALE_250   // Default ±250°/s
 
-uint16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;
+int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;
 
 void setup(){
   Serial.begin(115200); 
@@ -47,12 +47,12 @@ float AcZg = AcZ / ACCEL_SCALE_2G;
 Serial.print(AcXg); Serial.print(",");Serial.print(AcYg); Serial.print(",");Serial.println(AcZg); 
 delay(50);
 }
-uint16_t dataRead(uint8_t REG){
+int16_t dataRead(uint8_t REG){
   Wire.beginTransmission(MPU);
   Wire.write(REG);
   Wire.endTransmission(false);
   Wire.requestFrom(MPU,2,true);
-  uint16_t tempValue = Wire.read()<<8|Wire.read(); //OUT_H & OUT_L
+  int16_t tempValue = Wire.read()<<8|Wire.read(); //OUT_H & OUT_L
   return tempValue;
 }
 
