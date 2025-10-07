@@ -33,13 +33,13 @@ void setup(){
 }
 void loop(){
 AcX = dataRead(ACCLX);
-float AcXg = AcX / ACCEL_SCALE_2G;
+float AcXg = AcX / ACCEL_SCALE;
 
 AcY = dataRead(ACCLY);
-float AcYg = AcY / ACCEL_SCALE_2G;
+float AcYg = AcY / ACCEL_SCALE;
 
 AcZ = dataRead(ACCLZ);
-float AcZg = AcZ / ACCEL_SCALE_2G;
+float AcZg = AcZ / ACCEL_SCALE;
 
 //Tmp = dataRead(TEMP);  
 //Tmp_C = (Tmp / 340.0) + 36.53;  // Temperature formula from datasheet
