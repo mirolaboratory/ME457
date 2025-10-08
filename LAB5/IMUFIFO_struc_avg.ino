@@ -53,11 +53,6 @@ unsigned long startTime;
 bool firstLoop = true;
 unsigned long currentTime; 
 
-// Function prototypes
-uint16_t getFifoCount();
-void dataWrite(uint8_t REG, uint8_t val);
-void calculateAverage(float &avgX, float &avgY, float &avgZ);
-
 void setup(){
   Serial.begin(115200); 
   Wire.begin();  // Initialize I2C bus
@@ -137,13 +132,7 @@ void calAverage(float &avgX, float &avgY, float &avgZ) {
 
 // Function to get FIFO count
 uint16_t getFifoCount() {
-  Wire.beginTransmission(MPU);
-  Wire.write(FIFO_COUNTH);
-  Wire.endTransmission(false);
-  Wire.requestFrom(MPU, 2, true);
-  
-  uint16_t count = (Wire.read() << 8) | Wire.read();
-  return count;
+
 }
 
 void dataWrite(uint8_t REG, uint8_t val){
