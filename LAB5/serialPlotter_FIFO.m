@@ -156,15 +156,6 @@ if ~isempty(allData)
     fprintf('Accel Y range: %.3f to %.3f g\n', min(allData(:,3)), max(allData(:,3)));
     fprintf('Accel Z range: %.3f to %.3f g\n', min(allData(:,4)), max(allData(:,4)));
     
-    % Calculate sampling rate
-    if size(allData, 1) > 1
-        time_diffs = diff(allData(:,1));
-        avg_period = mean(time_diffs);
-        calc_rate = 1 / avg_period;
-        fprintf('Calculated sampling rate: %.2f Hz\n', calc_rate);
-        fprintf('Expected: 200 Hz\n');
-    end
-    
     % Save option
     saveChoice = input('Save data to file? (y/n): ', 's');
     if strcmpi(saveChoice, 'y')
