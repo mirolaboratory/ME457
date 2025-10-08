@@ -25,10 +25,6 @@ uint16_t bufferIndex = 0;
 unsigned long startTime = 0;
 bool firstLoop = true;
 
-// Function Prototypes
-uint16_t getFifoCount();
-void dataWrite(uint8_t reg, uint8_t val);
-
 void setup() {
   Serial.begin(115200);
   Wire.begin();
@@ -100,13 +96,6 @@ void loop() {
 
 // Get FIFO count (number of bytes currently in FIFO)
 uint16_t getFifoCount() {
-  Wire.beginTransmission(MPU);
-  Wire.write(FIFO_COUNTH);
-  Wire.endTransmission(false);
-  Wire.requestFrom(MPU, (uint8_t)2, true);
-  
-  uint16_t count = ((uint16_t)Wire.read() << 8) | Wire.read();
-  return count;
 }
 
 // Write data to MPU6050 register
