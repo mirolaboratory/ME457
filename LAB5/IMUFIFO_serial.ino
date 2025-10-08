@@ -40,11 +40,10 @@ void setup() {
   // Configure gyroscope (±250°/s range)
   dataWrite(GYRO_CONFIG, 0x00);
   
-  // Configure sample rate: 200 Hz
+  // Configure sample rate: 100 Hz
   // Sample Rate = Gyroscope Output Rate / (1 + SMPLRT_DIV)
-  // 1000 Hz / (1 + 4) = 200 Hz
-  dataWrite(CONFIG_REG, 0x03);      // DLPF_CFG = 3 (Gyro: 1kHz, Accel: 1kHz)
-  dataWrite(SMPLRT_DIV_REG, 0x04);  // Sample rate divider = 4
+  // 1000 Hz / (1 + 9) = 100 Hz
+
   
   // Reset FIFO
   
