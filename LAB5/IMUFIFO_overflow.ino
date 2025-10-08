@@ -57,6 +57,7 @@ unsigned long startTime;
 bool firstLoop = true;
 unsigned long currentTime; 
 
+
 void setup(){
   Serial.begin(115200); 
   Wire.begin();  // Initialize I2C bus
@@ -66,10 +67,13 @@ void setup(){
   delay(100);  // Give sensor time to stabilize
   
   // Configure for 200 Hz sampling rate
+
   
   // Enable FIFO
+
   
   // Enable all sensors to go into FIFO
+
 }
 
 void loop(){
@@ -79,20 +83,19 @@ void loop(){
   }
 
   // Check for overflow flag in INT_STATUS register
-  uint8_t intStatus = Wire.read();
   
   // Check bit 4 for FIFO overflow
   if () {
-    Serial.println("*** OVERFLOW PREVENTION: FIFO Overflow detected! Resetting FIFO ***");
-    handleOverflow();
-    return;  // Skip this loop iteration
+
   }
+
   // Get FIFO count
+
   
   // Process all available complete sets of batch
   while (fifoCount >= TOTAL_BYTES) {
     currentTime = millis() - startTime;
-  
+
     // Read 28 bytes (2 samples)
     
     // Parse batch
@@ -109,26 +112,25 @@ void loop(){
     // Print averaged data
     Serial.print(currentTime);
     Serial.print(",");
-    Serial.print(Ax_avg, 4);
+    Serial.print(Ax_avg, 2);
     Serial.print(",");
-    Serial.print(Ay_avg, 4);
+    Serial.print(Ay_avg, 2);
     Serial.print(",");
-    Serial.print(Az_avg, 4);
+    Serial.print(Az_avg, 2);
     Serial.print(",");
-    Serial.print(Gx_avg, 4);
+    Serial.print(Gx_avg, 2);
     Serial.print(",");
-    Serial.print(Gy_avg, 4);
+    Serial.print(Gy_avg, 2);
     Serial.print(",");
-    Serial.print(Gz_avg, 4);
+    Serial.print(Gz_avg, 2);
     Serial.print(",");
     Serial.println(Tp_avg, 2);
     
     // Update FIFO count for next iteration
     fifoCount -= TOTAL_BYTES;
-
-    //Delay to make FIFO overflow
-    delay(50);
   }
+  //Delay to make FIFO overflow
+  delay(50);
 }
 
 // Function to calculate average for all sensors from imuData array
@@ -170,18 +172,12 @@ void calAverage(float &avgAx, float &avgAy, float &avgAz,
 
 // Function to handle FIFO overflow
 void handleOverflow() {
-  // Disable FIFO and trigger reset (one step)
-  
-  // Re-enable FIFO
-
-  // Reconfigure what goes into FIFO
   
   Serial.println("*** OVERFLOW PREVENTION: FIFO has been reset and re-enabled ***");
 }
 
 // Function to get FIFO count
 uint16_t getFifoCount() {
-
 }
 
 void dataWrite(uint8_t REG, uint8_t val){
