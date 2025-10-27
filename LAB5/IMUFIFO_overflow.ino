@@ -67,13 +67,14 @@ void setup(){
   delay(100);  // Give sensor time to stabilize
   
   // Configure for 200 Hz sampling rate
-
+  dataWrite(CONFIG_REG, 0x03);     // DLPF_CFG = 3, Gyro rate = 1 kHz
+  dataWrite(SMPLRT_DIV_REG, 4);    // 1000/(1+4) = 200 Hz
   
   // Enable FIFO
-
+  dataWrite(USER_CTRL, 0x40);      // Enable FIFO (bit 6)
   
   // Enable all sensors to go into FIFO
-
+  dataWrite(FIFO_EN, 0xF8);        // Enable Temp + Gyro XYZ + Accel (bits 7,6,5,4,3)
 }
 
 void loop(){
@@ -83,24 +84,41 @@ void loop(){
   }
 
   // Check for overflow flag in INT_STATUS register
+  Wire.beginTransmission(MPU);
+  Wire.write(INT_STATUS);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU, 1, true);
+  uint8_t intStatus = Wire.read();
   
   // Check bit 4 for FIFO overflow
-  if () {
-
+  if (intStatus & 0x10) {
+    Serial.println("*** OVERFLOW PREVENTION: FIFO Overflow detected! Resetting FIFO ***");
+    handleOverflow();
+    return;  // Skip this loop iteration
   }
 
   // Get FIFO count
-
+  uint16_t fifoCount = getFifoCount();
   
   // Process all available complete sets of batch
   while (fifoCount >= TOTAL_BYTES) {
     currentTime = millis() - startTime;
-
-    // Read 28 bytes (2 samples)
     
-    // Parse batch
+    // Read 28 bytes (2 samples)
+    Wire.beginTransmission(MPU);
+    Wire.write(FIFO_R_W);
+    Wire.endTransmission(false);
+    Wire.requestFrom(MPU, TOTAL_BYTES, true);
+    
+    // Parse batches
     for (int i = 0; i < NUM_BATCHES; i++) {
       imuData[i].Ax = (Wire.read() << 8) | Wire.read();
+      imuData[i].Ay = (Wire.read() << 8) | Wire.read();
+      imuData[i].Az = (Wire.read() << 8) | Wire.read();
+      imuData[i].Tp = (Wire.read() << 8) | Wire.read();
+      imuData[i].Gx = (Wire.read() << 8) | Wire.read();
+      imuData[i].Gy = (Wire.read() << 8) | Wire.read();
+      imuData[i].Gz = (Wire.read() << 8) | Wire.read();
     }
     
     // Variables to store averaged values
@@ -130,7 +148,7 @@ void loop(){
     fifoCount -= TOTAL_BYTES;
   }
   //Delay to make FIFO overflow
-  delay(50);
+  delay(200);
 }
 
 // Function to calculate average for all sensors from imuData array
@@ -172,12 +190,38 @@ void calAverage(float &avgAx, float &avgAy, float &avgAz,
 
 // Function to handle FIFO overflow
 void handleOverflow() {
+  // Disable FIFO and trigger reset (one step)
+  Wire.beginTransmission(MPU);
+  Wire.write(USER_CTRL);
+  Wire.write(0x04);  // FIFO_EN=0, FIFO_RESET=1
+  Wire.endTransmission();
+  
+  delay(1);  // Wait for reset to complete
+  
+  // Re-enable FIFO
+  Wire.beginTransmission(MPU);
+  Wire.write(USER_CTRL);
+  Wire.write(0x40);  // FIFO_EN=1
+  Wire.endTransmission();
+  
+  // Reconfigure what goes into FIFO
+  Wire.beginTransmission(MPU);
+  Wire.write(FIFO_EN);
+  Wire.write(0xF8);  // Temp + Gyro + Accel
+  Wire.endTransmission();
   
   Serial.println("*** OVERFLOW PREVENTION: FIFO has been reset and re-enabled ***");
 }
 
 // Function to get FIFO count
 uint16_t getFifoCount() {
+  Wire.beginTransmission(MPU);
+  Wire.write(FIFO_COUNTH);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU, 2, true);
+  
+  uint16_t count = (Wire.read() << 8) | Wire.read();
+  return count;
 }
 
 void dataWrite(uint8_t REG, uint8_t val){
