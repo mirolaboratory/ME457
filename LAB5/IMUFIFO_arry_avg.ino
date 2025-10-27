@@ -58,10 +58,14 @@ void setup(){
   // Sample Rate = Gyroscope Output Rate / (1 + SMPLRT_DIV)
   // With CONFIG = 0x03, Gyro rate = 1kHz
   // For 200 Hz: 1000 / (1 + 4) = 200 Hz
+  dataWrite(CONFIG_REG, 0x03);     // DLPF_CFG = 3, Gyro rate = 1 kHz
+  dataWrite(SMPLRT_DIV_REG, 4);    // 1000/(1+4) = 200 Hz
   
   // Enable FIFO
+  dataWrite(USER_CTRL, 0x40);      // Enable FIFO (bit 6)
   
   // Enable accelerometer data to go into FIFO
+  dataWrite(FIFO_EN, 0x08);        // Enable ACCEL_XOUT, YOUT, ZOUT to FIFO (bit 3)
 }
 
 void loop(){
@@ -71,16 +75,23 @@ void loop(){
   }
 
   // Get FIFO count
+  uint16_t fifoCount = getFifoCount();
   
   // Check if at least one sample (6 bytes) is available
   if (fifoCount >= TOTAL_BYTES) {
     currentTime = millis() - startTime;
     
     // Read 6 bytes from FIFO (one complete sample)
+    Wire.beginTransmission(MPU);
+    Wire.write(FIFO_R_W);
+    Wire.endTransmission(false);
+    Wire.requestFrom(MPU, TOTAL_BYTES, true);
     
     // Parse 4 batches into array
     for (int i = 0; i < NUM_BATCHES; i++) {
       accelData[i][0] = (Wire.read() << 8) | Wire.read();  // AcX
+      accelData[i][1] = (Wire.read() << 8) | Wire.read();  // AcY
+      accelData[i][2] = (Wire.read() << 8) | Wire.read();  // AcZ
     }
     
     // Variables to store averaged values
@@ -102,7 +113,13 @@ void loop(){
 
 // Function to get FIFO count
 uint16_t getFifoCount() {
-
+  Wire.beginTransmission(MPU);
+  Wire.write(FIFO_COUNTH);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU, 2, true);
+  
+  uint16_t count = (Wire.read() << 8) | Wire.read();
+  return count;
 }
 
 void dataWrite(uint8_t REG, uint8_t val){
