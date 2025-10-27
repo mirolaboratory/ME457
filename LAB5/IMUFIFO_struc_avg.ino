@@ -62,10 +62,14 @@ void setup(){
   delay(100);  // Give sensor time to stabilize
   
   // Configure for 200 Hz sampling rate
+  dataWrite(CONFIG_REG, 0x03);     // DLPF_CFG = 3, Gyro rate = 1 kHz
+  dataWrite(SMPLRT_DIV_REG, 4);    // 1000/(1+4) = 200 Hz
   
   // Enable FIFO
+  dataWrite(USER_CTRL, 0x40);      // Enable FIFO (bit 6)
   
   // Enable accelerometer data to go into FIFO
+  dataWrite(FIFO_EN, 0x08);        // Enable ACCEL_XOUT, YOUT, ZOUT to FIFO (bit 3)
 }
 
 void loop(){
@@ -82,10 +86,16 @@ void loop(){
     currentTime = millis() - startTime;
     
     // Read 24 bytes from FIFO (4 complete samples)
+    Wire.beginTransmission(MPU);
+    Wire.write(FIFO_R_W);
+    Wire.endTransmission(false);
+    Wire.requestFrom(MPU, TOTAL_BYTES, true);
     
     // Parse 4 batches into structure array
     for (int i = 0; i < NUM_BATCHES; i++) {
       accelData[i].x = (Wire.read() << 8) | Wire.read();  // AcX
+      accelData[i].y = (Wire.read() << 8) | Wire.read();  // AcY
+      accelData[i].z = (Wire.read() << 8) | Wire.read();  // AcZ
     }
     
     // Variables to store averaged values
@@ -132,7 +142,13 @@ void calAverage(float &avgX, float &avgY, float &avgZ) {
 
 // Function to get FIFO count
 uint16_t getFifoCount() {
-
+  Wire.beginTransmission(MPU);
+  Wire.write(FIFO_COUNTH);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU, 2, true);
+  
+  uint16_t count = (Wire.read() << 8) | Wire.read();
+  return count;
 }
 
 void dataWrite(uint8_t REG, uint8_t val){
