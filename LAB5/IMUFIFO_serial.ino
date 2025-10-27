@@ -25,6 +25,10 @@ uint16_t bufferIndex = 0;
 unsigned long startTime = 0;
 bool firstLoop = true;
 
+// Function Prototypes
+uint16_t getFifoCount();
+void dataWrite(uint8_t reg, uint8_t val);
+
 void setup() {
   Serial.begin(115200);
   Wire.begin();
@@ -43,15 +47,20 @@ void setup() {
   // Configure sample rate: 100 Hz
   // Sample Rate = Gyroscope Output Rate / (1 + SMPLRT_DIV)
   // 1000 Hz / (1 + 9) = 100 Hz
-
+  dataWrite(CONFIG_REG, 0x03);      // DLPF_CFG = 3 (Gyro: 1kHz, Accel: 1kHz)
+  dataWrite(SMPLRT_DIV_REG, 0x09);  // Sample rate divider = 9
   
   // Reset FIFO
+  dataWrite(USER_CTRL, 0x04);
+  delay(10);
   
   // Enable FIFO
-
+  dataWrite(USER_CTRL, 0x40);
+  
   // Enable accelerometer and gyroscope data to FIFO
-
-
+  // Bit 3: ACCEL_FIFO_EN, Bits 6-4: Gyro XYZ
+  dataWrite(FIFO_EN, 0x78);
+  
   delay(100);
 }
 
@@ -73,14 +82,26 @@ void loop() {
     // Add start marker at the beginning of a new buffer
     if (bufferIndex == 0) {
       dataBuffer[bufferIndex++] = 0xFF;
-    }  
+    }
     
     // Store timestamp (4 bytes, big-endian format)
     dataBuffer[bufferIndex++] = (currentTime >> 24) & 0xFF;
-
+    dataBuffer[bufferIndex++] = (currentTime >> 16) & 0xFF;
+    dataBuffer[bufferIndex++] = (currentTime >> 8) & 0xFF;
+    dataBuffer[bufferIndex++] = currentTime & 0xFF;
+    
     // Read 24 bytes from FIFO (2 complete samples)
+    Wire.beginTransmission(MPU);
+    Wire.write(FIFO_R_W);
+    Wire.endTransmission(false);
+    Wire.requestFrom(MPU, BYTES_PER_READ, true);
     
     // Store 24 bytes of sensor data
+    for (uint8_t i = 0; i < BYTES_PER_READ; i++) {
+      if (bufferIndex < BUFFER_SIZE && Wire.available()) {
+        dataBuffer[bufferIndex++] = Wire.read();
+      }
+    }
     
     // Send buffer when full (5 timestamps + 10 samples = 141 bytes)
     if (bufferIndex >= BUFFER_SIZE) {
@@ -95,6 +116,13 @@ void loop() {
 
 // Get FIFO count (number of bytes currently in FIFO)
 uint16_t getFifoCount() {
+  Wire.beginTransmission(MPU);
+  Wire.write(FIFO_COUNTH);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU, (uint8_t)2, true);
+  
+  uint16_t count = ((uint16_t)Wire.read() << 8) | Wire.read();
+  return count;
 }
 
 // Write data to MPU6050 register
