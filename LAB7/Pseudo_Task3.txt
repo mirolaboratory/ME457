@@ -1,0 +1,100 @@
+PROGRAM MPU6050_Servo_Control
+
+// ========== HARDWARE SETUP ==========
+DECLARE servo1 for roll control on pin 9
+DECLARE servo2 for pitch control on pin 10
+DECLARE MPU6050 sensor
+DECLARE interrupt pin = 2
+
+// ========== VARIABLES ==========
+DECLARE pulseWidth: min=544µs, max=2400µs
+DECLARE DMP_ready flag = false
+DECLARE interrupt_occurred flag = false
+DECLARE packet_size for DMP data
+DECLARE buffer[64] for sensor data
+DECLARE quaternion (w, x, y, z)
+DECLARE gravity_vector (x, y, z)
+DECLARE angles[3] for yaw, pitch, roll
+DECLARE sensor_offsets for calibration
+
+// ========== INTERRUPT HANDLER ==========
+FUNCTION on_sensor_interrupt():
+    SET interrupt_occurred = true
+END FUNCTION
+
+// ========== INITIALIZATION ==========
+FUNCTION setup():
+    // 1. Initialize Hardware
+    ATTACH servo1 to pin 9 with pulse limits
+    ATTACH servo2 to pin 10 with pulse limits
+    START I2C communication
+    START serial communication at 115200 baud
+    WAIT for serial connection
+    
+    // 2. Initialize MPU6050
+    PRINT "Initializing MPU6050..."
+    INITIALIZE sensor
+    
+    // 3. Configure Sensor Settings
+    SET accelerometer range to ±2g
+    SET gyroscope range to ±250°/s
+    SET digital low-pass filter to mode 1
+    SET sample rate to 200Hz
+    
+    // 4. Apply Calibration Offsets
+    SET X_accel_offset = 
+    SET Y_accel_offset = 
+    SET Z_accel_offset = 
+    SET X_gyro_offset = 
+    SET Y_gyro_offset = 
+    SET Z_gyro_offset = 
+    
+    // 5. Initialize DMP (Digital Motion Processor)
+    status = INITIALIZE_DMP()
+    ENABLE DMP
+    ATTACH interrupt handler to pin 2 on RISING edge
+    SET DMP_ready = true
+    GET packet_size from DMP
+
+// ========== MAIN LOOP ==========
+FUNCTION loop():
+    // 1. Safety Check
+    IF NOT DMP_ready THEN
+        RETURN  // Exit if DMP failed to initialize
+    END IF
+    
+    // 2. Check for New Data
+    IF new_packet_available() THEN
+        RESET interrupt_occurred flag
+        
+        // 3. Read Sensor Data
+        READ packet from sensor FIFO buffer
+        
+        // 4. Calculate Orientation
+        EXTRACT quaternion from packet
+        CALCULATE gravity_vector from quaternion
+        CALCULATE yaw, pitch, roll from quaternion and gravity
+        
+        // 5. Convert to Degrees
+        pitch_degrees = pitch_radians × (180 / π)
+        roll_degrees = roll_radians × (180 / π)
+        
+        // 6. Debug Output
+        PRINT pitch_degrees + "," + roll_degrees
+        
+        // 7. Constrain Angles
+        pitch_degrees = constrain(pitch_degrees, -90, 90)
+        roll_degrees = constrain(roll_degrees, -90, 90)
+        
+        // 8. Map to Servo Range
+        pitch_servo_value = MAP(pitch_degrees, -90 to 90, 0 to 180)
+        roll_servo_value = MAP(roll_degrees, -90 to 90, 0 to 180)
+        
+        // 9. Control Servos
+        MOVE servo2 to pitch_servo_value
+        MOVE servo1 to roll_servo_value
+    END IF
+    
+    // 10. Small Delay
+    WAIT 20 milliseconds
+END FUNCTION
