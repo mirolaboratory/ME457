@@ -1,0 +1,29 @@
+PROGRAM Servo_Sweep
+
+// ========== HARDWARE SETUP ==========
+DECLARE servo motor object
+DECLARE servo_pin = 9
+DECLARE minimum_pulse_width = 544 microseconds
+DECLARE maximum_pulse_width = 2400 microseconds
+
+// ========== INITIALIZATION ==========
+FUNCTION setup():
+    ATTACH servo to pin 9
+    SET pulse width range: 544µs to 2400µs
+END FUNCTION
+
+// ========== MAIN LOOP ==========
+FUNCTION loop():
+    // 1. Sweep Forward (0° to 180° in 45° steps)
+    FOR angle FROM 0 TO 180 STEP 45:
+        MOVE servo to angle
+        WAIT x second
+    END FOR
+    
+    // Angles moved: 0°, 45°, 90°, 135°, 180°
+    
+    // 2. Return to Start Position
+    MOVE servo to 0 degrees
+    WAIT x seconds
+
+END FUNCTION
